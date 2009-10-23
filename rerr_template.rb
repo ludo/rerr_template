@@ -2,10 +2,15 @@
 #
 # Run: rails app_name -d mysql -m rerr_template.rb
 
-# Helpers
-# =============================================================================
 template_root = File.expand_path(File.dirname(template), File.join(root,'..'))
 
+# Load configuration
+# =============================================================================
+require "yaml"
+@config = YAML.load_file(File.join(template_root, "config.yml"))
+
+# Helpers quick'n'dirty
+# =============================================================================
 require File.join(template_root, 'lib', 'erb_to_haml')
 
 # require File.join(File.expand_path(File.dirname(template), File.join(root,'..')), "lib/rails_ext/template_runner")
@@ -13,6 +18,17 @@ def replace_migration(name, from)
   inside ("db/migrate") do
     run "cat #{from}/#{name}.rb > temp.rb"
     run "find *_#{name}.rb | xargs mv temp.rb"
+  end
+end
+
+def yes_unless_in_config?(question)
+  type = question.match(/\[(.*)\]/)[1].pluralize
+  name = question.match(/Add (.*)\?/)[1]
+  
+  if @config[type].include?(name)
+    true
+  else
+    yes?(question)
   end
 end
 
@@ -87,7 +103,7 @@ installed_gems << "rails-footnotes"
 
 # Authlogic
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add Authlogic?")
+if yes_unless_in_config?("[gem] Add authlogic?")
   gem "authlogic", :lib => false, :version => "~> 2.1", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -127,7 +143,7 @@ end
 
 # Lockdown
 # -----------------------------------------------------------------------------
-if installed_gems.include?("authlogic") && yes?("[gem] Add Lockdown?")
+if installed_gems.include?("authlogic") && yes_unless_in_config?("[gem] Add lockdown?")
   gem "lockdown", :lib => false, :version => "~> 1.3", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -168,7 +184,7 @@ end
 
 # Searchlogic
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add searchlogic?")
+if yes_unless_in_config?("[gem] Add searchlogic?")
   gem "searchlogic", :lib => false, :version => "~> 2.3", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -177,7 +193,7 @@ end
 
 # Formtastic
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add formtastic?")
+if yes_unless_in_config?("[gem] Add formtastic?")
   gem "formtastic", :lib => false, :version => "~> 0.9", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -188,7 +204,7 @@ end
 
 # Formtastic
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add inherited_resources?")
+if yes_unless_in_config?("[gem] Add inherited_resources?")
   gem "inherited_resources", :lib => false, :version => "~> 0.9", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -197,7 +213,7 @@ end
 
 # Paperclip
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add paperclip?")
+if yes_unless_in_config?("[gem] Add paperclip?")
   gem "paperclip", :lib => false, :version => "~> 2.3", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -206,7 +222,7 @@ end
 
 # Prawn
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add prawn?")
+if yes_unless_in_config?("[gem] Add prawn?")
   gem "prawn", :lib => false, :version => "~> 0.5", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -215,7 +231,7 @@ end
 
 # WillPaginate
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add will_paginate?")
+if yes_unless_in_config?("[gem] Add will_paginate?")
   gem "will_paginate", :lib => "will_paginate", :version => "~> 2.3", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -224,18 +240,19 @@ end
 
 # Geokit
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add geokit?")
+if yes_unless_in_config?("[gem] Add geokit?")
   plugin "geokit-rails", :git => "git://github.com/andre/geokit-rails.git"
   
   gem "geokit", :lib => false, :version => "~> 1.5", :source => "http://gemcutter.org"
   rake "gems:install"
 
   installed_gems << "geokit"
+  installed_plugins << "geokit-rails"
 end
 
 # Rest-client
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add rest-client?")
+if yes_unless_in_config?("[gem] Add rest-client?")
   gem "rest-client", :lib => false, :version => "~> 1.0", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -244,7 +261,7 @@ end
 
 # Haml
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add Haml?")
+if yes_unless_in_config?("[gem] Add haml?")
   gem "haml", :lib => false, :version => "~> 2.2", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -253,7 +270,7 @@ end
 
 # Googlecharts
 # -----------------------------------------------------------------------------
-if yes?("[gem] Add googlecharts?")
+if yes_unless_in_config?("[gem] Add googlecharts?")
   gem "googlecharts", :lib => false, :version => "~> 1.3", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -276,7 +293,7 @@ end
 
 # jQuery
 # -----------------------------------------------------------------------------
-if yes?("[javascript] Add jQuery?")
+if yes_unless_in_config?("[javascript] Add jquery?")
   inside("public/javascripts") do
     run "rm *" # Remove prototype
     run "touch application.js"

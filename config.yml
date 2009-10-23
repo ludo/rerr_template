@@ -1,0 +1,17 @@
+gems:
+  - authlogic
+  - formtastic
+  - geokit
+  - googlecharts
+  - haml
+  - inherited_resources
+  - lockdown
+  - paperclip
+  - prawn
+  - rest-client
+  - searchlogic
+  - will_paginate
+plugins:
+  - geokit-rails
+javascript:
+  - jquery
