@@ -11,7 +11,9 @@ gems:
   - rest-client
   - searchlogic
   - will_paginate
+  - settingslogic
+  - michel-dry_scaffold
 plugins:
   - geokit-rails
-javascript:
+javascripts:
   - jquery

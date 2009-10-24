@@ -3,6 +3,7 @@
 # Run: rails app_name -d mysql -m rerr_template.rb
 
 template_root = File.expand_path(File.dirname(template), File.join(root,'..'))
+app_name = @root.split('/').last
 
 # Load configuration
 # =============================================================================
@@ -47,16 +48,20 @@ run "rm public/favicon.ico"
 # =============================================================================
 git :init
 
+run "touch tmp/.gitignore log/.gitignore vendor/.gitignore"
+run %{find . -type d -empty | grep -v "vendor" | grep -v ".git" | grep -v "tmp" | xargs -I xxx touch xxx/.gitignore}
+file '.gitignore', <<-ENDEND
+.DS_Store
+log/*.log
+tmp/**/*
+config/database.yml
+db/*.sqlite3
+ENDEND
+
 # Freeze Rails gems
 # =============================================================================
 rake "rails:freeze:gems"
 
-# Add gems
-# =============================================================================
-# gem "grimen-dry_scaffold", :lib => false, :source => "http://gems.github.com"
-
-# Configure gems
-# =============================================================================
 
 # RSpec (test)
 # -----------------------------------------------------------------------------
@@ -73,7 +78,7 @@ installed_gems << "rspec"
 # -----------------------------------------------------------------------------
 gem "webrat", :lib => false, :version => "~> 0.5", :env => "test"
 gem "cucumber", :lib => false, :version => "~> 0.4", :env => "test"
-rake "gems:install"
+rake "gems:install" , :env => "test"   
 
 generate("cucumber")
 
@@ -83,21 +88,30 @@ installed_gems << "webrat"
 # factory-girl (test)
 # -----------------------------------------------------------------------------
 gem "factory_girl", :lib => "factory_girl", :source => "http://gemcutter.org", :version => "~> 1.2", :env => "test"
-rake "gems:install"
+rake "gems:install", :env => "test"
 
 installed_gems << "factory-girl"
 
 # Remarkable (test)
 # -----------------------------------------------------------------------------
 gem "remarkable_rails", :lib => false, :source => "http://gemcutter.org", :version => "~> 3.1", :env => "test"
-rake "gems:install"
+rake "gems:install" , :env => "test"   
 
-installed_gems << "remarkable_rails"
+installed_gems << "remarkable_rails" 
+
+
+# Mocha (mocking)
+# -----------------------------------------------------------------------------
+gem "mocha", :lib => false, :source => "http://gemcutter.org", :version => "~> 0.9.8", :env => "test"
+rake "gems:install" , :env => "test"   
+
+installed_gems << "mocha"
+
 
 # Footnotes (development)
 # -----------------------------------------------------------------------------
 gem "rails-footnotes", :lib => false, :version => "~> 3.6", :source => "http://gemcutter.org", :env => "development"
-rake "gems:install"
+rake "gems:install" , :env => "development"   
 
 installed_gems << "rails-footnotes"
 
@@ -275,6 +289,30 @@ if yes_unless_in_config?("[gem] Add googlecharts?")
   rake "gems:install"
 
   installed_gems << "googlecharts"
+end   
+
+# Settingslogic
+# -----------------------------------------------------------------------------
+if yes_unless_in_config?("[gem] Add settingslogic?")
+  gem "settingslogic", :lib => false, :version => "~> 2.0.3", :source => "http://gemcutter.org"
+  rake "gems:install"
+                                    
+
+  run "cp #{template_root}/templates/gems/settingslogic/app/models/settings.rb app/models/"
+  run "cp #{template_root}/templates/gems/settingslogic/config/application.yml config/"
+  
+  gsub_file("config/application.yml", /rails_app/) do |match|
+    "#{app_name.gsub("_","")}"
+  end  
+
+  installed_gems << "settingslogic"
+end
+
+# Settingslogic
+# -----------------------------------------------------------------------------
+if yes_unless_in_config?("[gem] Add michel-dry_scaffold?")
+  gem "michel-dry_scaffold", :lib => false, :version => "~> 0.3.5", :source => "http://gemcutter.org"
+  rake "gems:install"
 end
 
 # Configure plugins
@@ -315,13 +353,21 @@ rake "db:create:all"
 if yes?("[config] Use ActiveRecord for sessions?")
   rake "db:sessions:create"
   append_file("config/initializers/session_store.rb", "ActionController::Base.session_store = :active_record_store")
-end
+end 
 
 # Migrate and prepare databases
 # -----------------------------------------------------------------------------
 rake "db:migrate"
 rake "db:seed"
-rake "db:test:prepare"
+rake "db:test:prepare"  
+
+
+#Commit rails app to git?
+# -----------------------------------------------------------------------------
+if yes?("[git] Make initial git commit?")
+  git :add => "."
+  git :commit => "-a -m 'Initial commit'"                          
+end
 
 log("", "Installed the following gems: #{installed_gems.join(", ")}")
 log("", "Installed the following plugins: #{installed_plugins.join(", ")}")
