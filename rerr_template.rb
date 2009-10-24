@@ -255,13 +255,13 @@ end
 # Geokit
 # -----------------------------------------------------------------------------
 if yes_unless_in_config?("[gem] Add geokit?")
-  plugin "geokit-rails", :git => "git://github.com/andre/geokit-rails.git"
+  #plugin "geokit-rails", :git => "git://github.com/andre/geokit-rails.git"
   
   gem "geokit", :lib => false, :version => "~> 1.5", :source => "http://gemcutter.org"
   rake "gems:install"
 
   installed_gems << "geokit"
-  installed_plugins << "geokit-rails"
+  #installed_plugins << "geokit-rails"
 end
 
 # Rest-client
