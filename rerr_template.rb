@@ -25,7 +25,7 @@ end
 def yes_unless_in_config?(question)
   type = question.match(/\[(.*)\]/)[1].pluralize
   name = question.match(/Add (.*)\?/)[1]
-  
+
   if @config[type].include?(name)
     true
   else
@@ -33,7 +33,7 @@ def yes_unless_in_config?(question)
   end
 end
 
-# 
+#
 # =============================================================================
 installed_gems = []
 installed_plugins = []
@@ -62,7 +62,6 @@ ENDEND
 # =============================================================================
 rake "rails:freeze:gems"
 
-
 # RSpec (test)
 # -----------------------------------------------------------------------------
 gem "rspec", :lib => false, :version => "~> 1.2", :env => "test"
@@ -78,7 +77,7 @@ installed_gems << "rspec"
 # -----------------------------------------------------------------------------
 gem "webrat", :lib => false, :version => "~> 0.5", :env => "test"
 gem "cucumber", :lib => false, :version => "~> 0.4", :env => "test"
-rake "gems:install" , :env => "test"   
+rake "gems:install" , :env => "test"
 
 generate("cucumber")
 
@@ -95,15 +94,15 @@ installed_gems << "factory-girl"
 # Remarkable (test)
 # -----------------------------------------------------------------------------
 gem "remarkable_rails", :lib => false, :source => "http://gemcutter.org", :version => "~> 3.1", :env => "test"
-rake "gems:install" , :env => "test"   
+rake "gems:install" , :env => "test"
 
-installed_gems << "remarkable_rails" 
+installed_gems << "remarkable_rails"
 
 
 # Mocha (mocking)
 # -----------------------------------------------------------------------------
 gem "mocha", :lib => false, :source => "http://gemcutter.org", :version => "~> 0.9.8", :env => "test"
-rake "gems:install" , :env => "test"   
+rake "gems:install" , :env => "test"
 
 installed_gems << "mocha"
 
@@ -111,7 +110,7 @@ installed_gems << "mocha"
 # Footnotes (development)
 # -----------------------------------------------------------------------------
 gem "rails-footnotes", :lib => false, :version => "~> 3.6", :source => "http://gemcutter.org", :env => "development"
-rake "gems:install" , :env => "development"   
+rake "gems:install" , :env => "development"
 
 installed_gems << "rails-footnotes"
 
@@ -126,7 +125,7 @@ if yes_unless_in_config?("[gem] Add authlogic?")
   gsub_file("app/models/user_session.rb", /(Authlogic::Session::Base)/mi) do |match|
     "#{match}\n  generalize_credentials_error_messages(true)"
   end
-  
+
   # User
   generate("rspec_model", "user")
   replace_migration("create_users", template_root + "/templates/gems/authlogic/db/migrate")
@@ -152,7 +151,41 @@ if yes_unless_in_config?("[gem] Add authlogic?")
   # ApplicationController
   run "cp #{template_root}/templates/gems/authlogic/app/controllers/application_controller.rb app/controllers/"
 
+  # Set root_url
+  sentinel = '# map.root :controller => "welcome"'
+  gsub_file("config/routes.rb", /(#{Regexp.escape(sentinel)})/mi) do |match|
+    "#{match}\n  map.root :controller => 'user_sessions', :action => 'new'"
+  end
+  
   installed_gems << "authlogic"
+end
+
+# Authlogic-OpenID
+# -----------------------------------------------------------------------------
+if installed_gems.include?("authlogic") && yes_unless_in_config?("[plugin] Add authlogic_openid?")
+  generate("migration", "add_users_openid_field")
+  replace_migration("add_users_openid_field", template_root + "/templates/plugins/authlogic_openid/db/migrate")
+
+  plugin "open_id_authentication", :git => "git://github.com/rails/open_id_authentication.git"
+  rake "open_id_authentication:db:create"
+
+  # Gem version is outdated! Use plugin!
+  # These awkward lines below: Why? https://rails.lighthouseapp.com/projects/8994/tickets/2861-templaterunner-adds-gems-to-environment-file-in-reverse-of-written-order
+  # sentinel = "config.gem 'authlogic', :lib => false, :source => 'http://gemcutter.org', :version => '~> 2.1'"
+  # gsub_file 'config/environment.rb', /(#{Regexp.escape(sentinel)})/mi do |match|
+  #   "#{match}\n  config.gem 'authlogic-oid', :lib => 'authlogic_openid', :source => 'http://gemcutter.org', :version => '~> 1.0'"
+  # end
+
+  gem "ruby-openid", :lib => "openid", :version => "~> 2.1", :source => "http://gemcutter.org"
+
+  plugin "authlogic_openid", :git => "git://github.com/binarylogic/authlogic_openid.git"
+
+  run "cp #{template_root}/templates/plugins/authlogic_openid/app/views/user_sessions/* app/views/user_sessions/"
+  run "cp #{template_root}/templates/plugins/authlogic_openid/app/views/users/* app/views/users/"
+
+  installed_gems << "ruby-openid"
+  installed_plugins << "authlogic_openid"
+  installed_plugins << "open_id_authentication"
 end
 
 # Lockdown
@@ -212,7 +245,7 @@ if yes_unless_in_config?("[gem] Add formtastic?")
   rake "gems:install"
 
   generate("formtastic")
-  
+
   installed_gems << "formtastic"
 end
 
@@ -256,7 +289,7 @@ end
 # -----------------------------------------------------------------------------
 if yes_unless_in_config?("[gem] Add geokit?")
   #plugin "geokit-rails", :git => "git://github.com/andre/geokit-rails.git"
-  
+
   gem "geokit", :lib => false, :version => "~> 1.5", :source => "http://gemcutter.org"
   rake "gems:install"
 
@@ -289,21 +322,21 @@ if yes_unless_in_config?("[gem] Add googlecharts?")
   rake "gems:install"
 
   installed_gems << "googlecharts"
-end   
+end
 
 # Settingslogic
 # -----------------------------------------------------------------------------
 if yes_unless_in_config?("[gem] Add settingslogic?")
   gem "settingslogic", :lib => false, :version => "~> 2.0.3", :source => "http://gemcutter.org"
   rake "gems:install"
-                                    
+
 
   run "cp #{template_root}/templates/gems/settingslogic/app/models/settings.rb app/models/"
   run "cp #{template_root}/templates/gems/settingslogic/config/application.yml config/"
-  
+
   gsub_file("config/application.yml", /rails_app/) do |match|
     "#{app_name.gsub("_","")}"
-  end  
+  end
 
   installed_gems << "settingslogic"
 end
@@ -353,20 +386,19 @@ rake "db:create:all"
 if yes?("[config] Use ActiveRecord for sessions?")
   rake "db:sessions:create"
   append_file("config/initializers/session_store.rb", "ActionController::Base.session_store = :active_record_store")
-end 
+end
 
 # Migrate and prepare databases
 # -----------------------------------------------------------------------------
 rake "db:migrate"
 rake "db:seed"
-rake "db:test:prepare"  
+rake "db:test:prepare"
 
-
-#Commit rails app to git?
+# Commit rails app to git?
 # -----------------------------------------------------------------------------
 if yes?("[git] Make initial git commit?")
   git :add => "."
-  git :commit => "-a -m 'Initial commit'"                          
+  git :commit => "-a -m 'Initial commit'"
 end
 
 log("", "Installed the following gems: #{installed_gems.join(", ")}")
