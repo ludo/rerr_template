@@ -13,6 +13,7 @@ gems:
   - will_paginate
   - settingslogic
   - michel-dry_scaffold
+  - interfacelift
 plugins:
   - authlogic_openid
   - geokit-rails

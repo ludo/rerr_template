@@ -341,10 +341,18 @@ if yes_unless_in_config?("[gem] Add settingslogic?")
   installed_gems << "settingslogic"
 end
 
-# Settingslogic
+# michel-dry_scaffold
 # -----------------------------------------------------------------------------
 if yes_unless_in_config?("[gem] Add michel-dry_scaffold?")
   gem "michel-dry_scaffold", :lib => false, :version => "~> 0.3.5", :source => "http://gemcutter.org"
+  rake "gems:install"
+end  
+
+
+# Interfacelift
+# -----------------------------------------------------------------------------
+if yes_unless_in_config?("[gem] Add interfacelift?")
+  gem "interfacelift", :lib => false,  :source => "http://gemcutter.org"
   rake "gems:install"
 end
 
