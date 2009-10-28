@@ -26,10 +26,10 @@ def yes_unless_in_config?(question)
   type = question.match(/\[(.*)\]/)[1].pluralize
   name = question.match(/Add (.*)\?/)[1]
 
-  if @config[type].include?(name)
+  if @config[type] && @config[type].include?(name)
     true
   else
-    yes?(question)
+    @leave_me_alone ? true : yes?(question)
   end
 end
 
@@ -37,6 +37,10 @@ end
 # =============================================================================
 installed_gems = []
 installed_plugins = []
+
+# Be gentle
+# =============================================================================
+@leave_me_alone = yes?("Do you want me to leave you alone?")
 
 # Delete files
 # =============================================================================
@@ -56,6 +60,7 @@ log/*.log
 tmp/**/*
 config/database.yml
 db/*.sqlite3
+db/schema.rb
 ENDEND
 
 # Freeze Rails gems
@@ -98,21 +103,12 @@ rake "gems:install" , :env => "test"
 
 installed_gems << "remarkable_rails"
 
-
 # Mocha (mocking)
 # -----------------------------------------------------------------------------
 gem "mocha", :lib => false, :source => "http://gemcutter.org", :version => "~> 0.9.8", :env => "test"
 rake "gems:install" , :env => "test"
 
 installed_gems << "mocha"
-
-
-# Footnotes (development)
-# -----------------------------------------------------------------------------
-gem "rails-footnotes", :lib => false, :version => "~> 3.6", :source => "http://gemcutter.org", :env => "development"
-rake "gems:install" , :env => "development"
-
-installed_gems << "rails-footnotes"
 
 # Authlogic
 # -----------------------------------------------------------------------------
@@ -329,7 +325,6 @@ end
 if yes_unless_in_config?("[gem] Add settingslogic?")
   gem "settingslogic", :lib => false, :version => "~> 2.0.3", :source => "http://gemcutter.org"
   rake "gems:install"
-
 
   run "cp #{template_root}/templates/gems/settingslogic/app/models/settings.rb app/models/"
   run "cp #{template_root}/templates/gems/settingslogic/config/application.yml config/"
