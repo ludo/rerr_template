@@ -1,19 +1,21 @@
 gems:
+  - aasm
   - authlogic
   - formtastic
   - geokit
   - googlecharts
   - haml
   - inherited_resources
+  - interfacelift
   - lockdown
+  - michel-dry_scaffold
   - paperclip
   - prawn
   - rest-client
   - searchlogic
   - will_paginate
   - settingslogic
-  - michel-dry_scaffold
-  - interfacelift
+  - validation_reflection
 plugins:
   - authlogic_openid
   - geokit-rails

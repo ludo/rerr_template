@@ -355,7 +355,21 @@ end
 # Interfacelift
 # -----------------------------------------------------------------------------
 if yes_unless_in_config?("[gem] Add interfacelift?")
-  gem "interfacelift", :lib => false,  :source => "http://gemcutter.org"
+  gem "interfacelift", :lib => false, :source => "http://gemcutter.org"
+  rake "gems:install"
+end
+
+# validation_reflection
+# -----------------------------------------------------------------------------
+if yes_unless_in_config?("[gem] Add validation_reflection?")
+  gem "validation_reflection", :lib => false, :version => "~> 0.3" :source => "http://gemcutter.org"
+  rake "gems:install"
+end
+
+# aasm
+# -----------------------------------------------------------------------------
+if yes_unless_in_config?("[gem] Add aasm?")
+  gem "aasm", :lib => false, :version => "~> 2.1" :source => "http://gemcutter.org"
   rake "gems:install"
 end
 
