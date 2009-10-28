@@ -18,6 +18,7 @@ gems:
   - validation_reflection
 plugins:
   - authlogic_openid
+  - backgroundrb
   - geokit-rails
 javascripts:
   - jquery

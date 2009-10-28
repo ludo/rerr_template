@@ -376,6 +376,18 @@ end
 # Configure plugins
 # =============================================================================
 
+# backgroundrb
+# -----------------------------------------------------------------------------
+if yes?("[plugin] Add backgroundrb?")
+  gem "chronic", :lib => false, :version => "~> 0.2" :source => "http://gemcutter.org"
+  gem "packet", :lib => false, :version => "~> 0.1" :source => "http://gemcutter.org"
+  rake "gems:install"
+  
+  plugin "backgroundrb", :git => "git://github.com/gnufied/backgroundrb.git"
+  
+  rake "backgroundrb:setup"
+end
+
 # Eschaton
 #
 # Need to look into this plugin, using it fails with "no such file to load -- google/google"
