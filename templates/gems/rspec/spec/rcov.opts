@@ -1,0 +1,4 @@
+--exclude "spec/*,gems/,features/step_definitions/*,features/support/*"
+--rails
+--aggregate coverage.data
+--sort=coverage

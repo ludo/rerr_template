@@ -26,11 +26,7 @@ def yes_unless_in_config?(question)
   type = question.match(/\[(.*)\]/)[1].pluralize
   name = question.match(/Add (.*)\?/)[1]
 
-  if @config[type] && @config[type].include?(name)
-    true
-  else
-    @leave_me_alone ? true : yes?(question)
-  end
+  @config[type] && @config[type].include?(name)
 end
 
 #
@@ -47,6 +43,7 @@ installed_plugins = []
 run "rm README"
 run "rm public/index.html"
 run "rm public/favicon.ico"
+run "touch public/favicon.ico"
 
 # Set-up git repository
 # =============================================================================
@@ -59,8 +56,10 @@ file '.gitignore', <<-ENDEND
 log/*.log
 tmp/**/*
 config/database.yml
+coverage.data
 db/*.sqlite3
 db/schema.rb
+generated
 ENDEND
 
 # Freeze Rails gems
@@ -71,9 +70,11 @@ rake "rails:freeze:gems"
 # -----------------------------------------------------------------------------
 gem "rspec", :lib => false, :version => "~> 1.2", :env => "test"
 gem "rspec-rails", :lib => false, :version => "~> 1.2", :env => "test"
-rake "gems:install"
+rake "gems:install", :env => "test"
 
 generate("rspec")
+
+run "cp #{template_root}/templates/gems/rspec/spec/rcov.opts spec/"
 
 installed_gems << "rspec-rails"
 installed_gems << "rspec"
@@ -89,7 +90,7 @@ installed_gems << "factory-girl"
 # -----------------------------------------------------------------------------
 gem "webrat", :lib => false, :version => "~> 0.5", :env => "test"
 gem "cucumber", :lib => false, :version => "~> 0.4", :env => "test"
-rake "gems:install" , :env => "test"
+rake "gems:install", :env => "test"
 
 generate("cucumber")
 
@@ -107,16 +108,25 @@ installed_gems << "webrat"
 # Remarkable (test)
 # -----------------------------------------------------------------------------
 gem "remarkable_rails", :lib => false, :source => "http://gemcutter.org", :version => "~> 3.1", :env => "test"
-rake "gems:install" , :env => "test"
+rake "gems:install", :env => "test"
 
 installed_gems << "remarkable_rails"
 
 # Mocha (mocking)
 # -----------------------------------------------------------------------------
 gem "mocha", :lib => false, :source => "http://gemcutter.org", :version => "~> 0.9.8", :env => "test"
-rake "gems:install" , :env => "test"
+rake "gems:install", :env => "test"
 
 installed_gems << "mocha"
+
+# rcov
+# -----------------------------------------------------------------------------
+gem "rcov", :lib => false, :source => "http://gemcutter.org", :version => "~> 0.9", :env => "test"
+rake "gems:install", :env => "test"
+
+run "cp #{template_root}/templates/gems/rcov/lib/tasks/rcov.rake lib/tasks/"
+
+installed_gems << "rcov"
 
 # Authlogic
 # -----------------------------------------------------------------------------
@@ -362,14 +372,14 @@ end
 # validation_reflection
 # -----------------------------------------------------------------------------
 if yes_unless_in_config?("[gem] Add validation_reflection?")
-  gem "validation_reflection", :lib => false, :version => "~> 0.3" :source => "http://gemcutter.org"
+  gem "validation_reflection", :lib => false, :version => "~> 0.3", :source => "http://gemcutter.org"
   rake "gems:install"
 end
 
 # aasm
 # -----------------------------------------------------------------------------
 if yes_unless_in_config?("[gem] Add aasm?")
-  gem "aasm", :lib => false, :version => "~> 2.1" :source => "http://gemcutter.org"
+  gem "aasm", :lib => false, :version => "~> 2.1", :source => "http://gemcutter.org"
   rake "gems:install"
 end
 
@@ -378,9 +388,9 @@ end
 
 # backgroundrb
 # -----------------------------------------------------------------------------
-if yes?("[plugin] Add backgroundrb?")
-  gem "chronic", :lib => false, :version => "~> 0.2" :source => "http://gemcutter.org"
-  gem "packet", :lib => false, :version => "~> 0.1" :source => "http://gemcutter.org"
+if yes_unless_in_config?("[plugin] Add backgroundrb?")
+  gem "chronic", :lib => false, :version => "~> 0.2", :source => "http://gemcutter.org"
+  gem "packet", :lib => false, :version => "~> 0.1", :source => "http://gemcutter.org"
   rake "gems:install"
   
   plugin "backgroundrb", :git => "git://github.com/gnufied/backgroundrb.git"
@@ -392,7 +402,7 @@ end
 #
 # Need to look into this plugin, using it fails with "no such file to load -- google/google"
 # -----------------------------------------------------------------------------
-# if yes?("[plugin] Add eschaton (helps writing google map mashups)?")
+# if yes_unless_in_config?("[plugin] Add eschaton?")
 #   plugin "eschaton", :git => "git://github.com/yawningman/eschaton.git"
 # end
 
@@ -415,12 +425,12 @@ erb_to_haml("app/views") if installed_gems.include?("haml")
 
 # Database
 # =============================================================================
-rake "db:drop:all" if yes?("[db] Drop existing databases?")
+rake "db:drop:all" if @leave_me_alone || yes?("[db] Drop existing databases?")
 rake "db:create:all"
 
 # ActiveRecordSessionStore
 # -----------------------------------------------------------------------------
-if yes?("[config] Use ActiveRecord for sessions?")
+if @leave_me_alone || yes?("[config] Use ActiveRecord for sessions?")
   rake "db:sessions:create"
   append_file("config/initializers/session_store.rb", "ActionController::Base.session_store = :active_record_store")
 end
