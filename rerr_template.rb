@@ -78,6 +78,13 @@ generate("rspec")
 installed_gems << "rspec-rails"
 installed_gems << "rspec"
 
+# factory-girl (test)
+# -----------------------------------------------------------------------------
+gem "factory_girl", :lib => "factory_girl", :source => "http://gemcutter.org", :version => "~> 1.2", :env => "test"
+rake "gems:install", :env => "test"
+
+installed_gems << "factory-girl"
+
 # Cucumber (test)
 # -----------------------------------------------------------------------------
 gem "webrat", :lib => false, :version => "~> 0.5", :env => "test"
@@ -86,15 +93,16 @@ rake "gems:install" , :env => "test"
 
 generate("cucumber")
 
+if installed_gems.include?("factory-girl")
+  append_file("features/support/env.rb", <<-SEED
+require 'factory_girl'
+Dir.glob(File.join(File.dirname(__FILE__), '../../spec/factories/*.rb')).each { |f| require f }
+  SEED
+  )
+end
+
 installed_gems << "cucumber"
 installed_gems << "webrat"
-
-# factory-girl (test)
-# -----------------------------------------------------------------------------
-gem "factory_girl", :lib => "factory_girl", :source => "http://gemcutter.org", :version => "~> 1.2", :env => "test"
-rake "gems:install", :env => "test"
-
-installed_gems << "factory-girl"
 
 # Remarkable (test)
 # -----------------------------------------------------------------------------
